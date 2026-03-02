@@ -166,3 +166,33 @@ export async function getOrdersForProfile(authContext = {}) {
       order.customerCode === customerCode
   );
 }
+
+export async function cancelOrder(order) {
+  const payload = {
+    orderNumber: order.orderNumber,
+    customerCode: order.customerCode,
+    profileId: Number(order.profileId),
+    productId: Number(order.productId),
+    productCode: order.productCode,
+    quantity: Number(order.quantity),
+    unitPrice: Number(order.unitPrice),
+    status: "CANCELLED",
+  };
+
+  const response = await fetch(`${ORDER_API_BASE_URL}/orders/${order.orderNumber}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Order API error (${response.status}): ${errorBody || response.statusText}`
+    );
+  }
+
+  return response.json();
+}
