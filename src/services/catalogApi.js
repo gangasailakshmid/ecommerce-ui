@@ -16,6 +16,19 @@ function getLatestPrice(ticketPrices) {
   return ticketPrices[0]?.ticketPrice ?? null;
 }
 
+function attachStubImage(product) {
+  if (!product) {
+    return product;
+  }
+  if (product.imageUrl || product.image || product.thumbnailUrl) {
+    return product;
+  }
+  if (!product.productCode) {
+    return product;
+  }
+  return { ...product, imageUrl: `/product-images/${product.productCode}.svg` };
+}
+
 export async function fetchProducts() {
   const products = await request("/products");
   const prices = await Promise.all(
@@ -37,10 +50,12 @@ export async function fetchProducts() {
     return acc;
   }, {});
 
-  return products.map((product) => ({
-    ...product,
-    price: pricesByCode[product.productCode] ?? null,
-  }));
+  return products.map((product) =>
+    attachStubImage({
+      ...product,
+      price: pricesByCode[product.productCode] ?? null,
+    })
+  );
 }
 
 export async function fetchProductByCode(productCode) {
@@ -54,5 +69,5 @@ export async function fetchProductByCode(productCode) {
     price = null;
   }
 
-  return { ...product, price };
+  return attachStubImage({ ...product, price });
 }
