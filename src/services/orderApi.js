@@ -196,3 +196,89 @@ export async function cancelOrder(order) {
 
   return response.json();
 }
+
+export async function getCoupons() {
+  const response = await fetch(`${ORDER_API_BASE_URL}/coupons`);
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Coupon API error (${response.status}): ${errorBody || response.statusText}`
+    );
+  }
+  return response.json();
+}
+
+export async function validateCoupon(couponCode) {
+  const normalizedCode = String(couponCode || "").trim();
+  if (!normalizedCode) {
+    throw new Error("Enter a coupon code.");
+  }
+
+  const response = await fetch(
+    `${ORDER_API_BASE_URL}/coupons/${encodeURIComponent(normalizedCode)}/validate`
+  );
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Coupon API error (${response.status}): ${errorBody || response.statusText}`
+    );
+  }
+  return response.json();
+}
+
+export async function getStateTaxes() {
+  const response = await fetch(`${ORDER_API_BASE_URL}/taxes`);
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Tax API error (${response.status}): ${errorBody || response.statusText}`
+    );
+  }
+  return response.json();
+}
+
+export async function createShippingForOrder(orderNumber, shipping) {
+  const payload = {
+    orderNumber,
+    addressLine1: shipping.addressLine1,
+    addressLine2: shipping.addressLine2 || "",
+    city: shipping.city,
+    state: shipping.state,
+    postalCode: shipping.postalCode,
+    country: shipping.country,
+    status: "PENDING",
+    shippedDate: null,
+    deliveryDate: null,
+  };
+
+  const response = await fetch(`${ORDER_API_BASE_URL}/shipping`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Shipping API error (${response.status}): ${errorBody || response.statusText}`
+    );
+  }
+  return response.json();
+}
+
+export async function createShippingForOrders(orders, shipping) {
+  if (!Array.isArray(orders) || orders.length === 0) {
+    return [];
+  }
+  const responses = [];
+  for (let i = 0; i < orders.length; i += 1) {
+    const orderNumber = orders[i]?.orderNumber;
+    if (!orderNumber) {
+      continue;
+    }
+    const response = await createShippingForOrder(orderNumber, shipping);
+    responses.push(response);
+  }
+  return responses;
+}
